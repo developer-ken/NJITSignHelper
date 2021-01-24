@@ -10,9 +10,6 @@ namespace NJITSignHelper
 {
     class Program
     {
-        static int studentid;
-        static string token;
-        static string cpe;
         private static PhyLocation.Location location;
         const string SERVICE = "https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign";
 
@@ -47,22 +44,6 @@ namespace NJITSignHelper
             } while (true);
             Console.WriteLine("OK.\n登录成功。\n-----------------------\n");
 
-
-            try
-            {
-                string[] authInfos = File.ReadAllText("account.private").Replace("\r", "").Split('\n');
-                studentid = int.Parse(authInfos[0]);
-                token = authInfos[1];
-                cpe = authInfos[2];
-                location = new PhyLocation.Location(double.Parse(authInfos[3].Split(',')[0]),
-                    double.Parse(authInfos[3].Split(',')[1]))//小前大后
-                { locName = authInfos[3].Split(',')[2] };//地址描述文本
-            }
-            catch
-            {
-                Console.WriteLine("无法加载用户认证信息，无法继续执行。");
-                while (true) Thread.Sleep(int.MaxValue);
-            }
             SignMsgLib.Client client = new SignMsgLib.Client(new Client.ClientInfo()
             {
                 SystemName = "Android",
