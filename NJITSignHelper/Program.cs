@@ -1,6 +1,8 @@
-﻿using System;
+﻿using NJITSignHelper.SignMsgLib;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using static NJITSignHelper.SignMsgLib.SignObject;
 
@@ -12,10 +14,40 @@ namespace NJITSignHelper
         static string token;
         static string cpe;
         private static PhyLocation.Location location;
+        const string SERVICE = "https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign";
 
 
         static void Main(string[] args)
         {
+            LoginHandler han = new LoginHandler();
+            Console.WriteLine("====NJIT体温签到自动程序====\n" +
+                "请登录您的【统一认证系统】账号(用来登录信息门户和教务系统那个账号)\n\n----NJIT统一认证系统----");
+            do
+            {
+                int number = -1;
+                try
+                {
+                    Console.Write("学号>");
+                    number = int.Parse(Console.ReadLine());
+                }
+                catch
+                {
+                    Console.WriteLine("请输入正确的学号！");
+                }
+                Console.Write("密码>");
+                string password = Console.ReadLine();
+                Console.Write("获取CAS认证...");
+                bool succ = han.Login(number, password, SERVICE);
+                if (!succ)
+                {
+                    Console.WriteLine("FAIL\n登录失败，请重试。");
+                    continue;
+                }
+                break;
+            } while (true);
+            Console.WriteLine("OK.\n登录成功。\n-----------------------\n");
+
+
             try
             {
                 string[] authInfos = File.ReadAllText("account.private").Replace("\r", "").Split('\n');
@@ -31,7 +63,14 @@ namespace NJITSignHelper
                 Console.WriteLine("无法加载用户认证信息，无法继续执行。");
                 while (true) Thread.Sleep(int.MaxValue);
             }
-            SignMsgLib.Client client = new SignMsgLib.Client(cpe, token, studentid);
+            SignMsgLib.Client client = new SignMsgLib.Client(new Client.ClientInfo()
+            {
+                SystemName = "Android",
+                SystemVersion = "10",
+                AppVersion = "8.2.17",
+                DeviceModel = "Peach X",
+                DeviceId = Guid.NewGuid()//生成新的硬件ID
+            }, han);
             int last = 0;
             while (true)
             {
@@ -48,7 +87,27 @@ namespace NJITSignHelper
                     Console.WriteLine("\t<" + item.signWid + ">开始处理");
                     try
                     {
-                        item.FetchMore();//获取详细信息
+                        try
+                        {
+                            item.FetchMore();//获取详细信息
+                        }
+                        catch(Exception err)
+                        {
+                            if (Regex.IsMatch(err.Message, ".*认证失败.*"))
+                            {
+                                Console.Write("\tCAS失效，试图更新...");
+                                if (han.ReLogin())
+                                {
+                                    Console.WriteLine("OK.");
+                                    item.FetchMore();
+                                }
+                                else
+                                {
+                                    Console.WriteLine("FAIL.\n\tCAS认证失败，无法获取签到信息。");
+                                    throw new Exception("CAS已失效且无法更新");
+                                }
+                            }
+                        }
                         List<FormSelection> selections = new List<FormSelection>();
                         foreach (var quest in item.form)
                         {

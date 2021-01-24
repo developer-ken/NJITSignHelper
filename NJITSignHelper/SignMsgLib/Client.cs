@@ -12,15 +12,23 @@ namespace NJITSignHelper.SignMsgLib
     class Client
     {
         public const int SCHOOL_CODE = 11276;
+        public const string ENCODE_KEY = "b3L26XNL";
         public const string ACCESS_TOKEN = "5e5b7d74e7b43fc22a851e615fd2792f";
         public const string APPID = "amp-ios-11276";
         public const string UA = "Mozilla/5.0 (Linux; Android 10; Mi 10 Build/QKQ1.191117.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.101 Mobile Safari/537.36  cpdaily/8.2.17 wisedu/8.2.17 okhttp/3.12.4";
 
-        public string Cpdaily_Extension;
-        public string MOD_AUTH_CAS;
-        public int StudentNumber;
+        public ClientInfo Info { get; private set; }
+        public LoginHandler Login { get; private set; }
 
-        public JObject HTTP_POST(string url, JObject payload)
+        public struct ClientInfo
+        {
+            public string SystemName, SystemVersion;
+            public string DeviceModel;
+            public Guid DeviceId;
+            public string AppVersion;
+        }
+
+        public JObject HTTP_POST(string url, JObject payload, string CpdCrypt = "")
         {
             string result = "";
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -29,9 +37,9 @@ namespace NJITSignHelper.SignMsgLib
 
             req.Headers.Add("accessToken", ACCESS_TOKEN);
             req.Headers.Add("appId", APPID);
-            req.Headers.Add("Cpdaily-Extension", Cpdaily_Extension);
+            req.Headers.Add("Cpdaily-Extension", CpdCrypt);
             req.CookieContainer = new CookieContainer();
-            req.CookieContainer.Add(new Cookie("MOD_AUTH_CAS", MOD_AUTH_CAS, "/", ".njit.campusphere.net"));
+            req.CookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS, "/", ".njit.campusphere.net"));
 
             req.UserAgent = UA;
 
@@ -61,11 +69,10 @@ namespace NJITSignHelper.SignMsgLib
         /// </summary>
         /// <param name="cpe">Cpdaily-Extension的值</param>
         /// <param name="ticket">MOD_AUTH_CAS的值</param>
-        public Client(string cpe, string ticket, int studentNo)
+        public Client(ClientInfo inf, LoginHandler login)
         {
-            Cpdaily_Extension = cpe;
-            MOD_AUTH_CAS = ticket;
-            StudentNumber = studentNo;
+            Login = login;
+            Info = inf;
         }
 
         public SignObject[] getSignList(int lastupdate = 0)
@@ -89,9 +96,9 @@ namespace NJITSignHelper.SignMsgLib
             do
             {
                 var payload = new JObject();
-                payload.Add("userId", StudentNumber.ToString());
+                payload.Add("userId", Login.StudentId.ToString());
                 payload.Add("schoolCode", SCHOOL_CODE.ToString());
-                payload.Add("sign", MD5Encrypt(ACCESS_TOKEN + SCHOOL_CODE.ToString() + StudentNumber.ToString()));
+                payload.Add("sign", MD5Encrypt(ACCESS_TOKEN + SCHOOL_CODE.ToString() + Login.StudentId.ToString()));
                 payload.Add("timestamp", lastupdate.ToString());
 
                 var page = new JObject();
@@ -100,7 +107,9 @@ namespace NJITSignHelper.SignMsgLib
                 page.Add("total", "");
                 payload.Add("page", page);
 
-                var result = HTTP_POST("http://messageapi.campusphere.net/message_pocket_web/V2/mp/restful/mobile/message/extend/get", payload);
+                var result = HTTP_POST(
+                    "http://messageapi.campusphere.net/message_pocket_web/V2/mp/restful/mobile/message/extend/get",
+                    payload);
                 if (result.Value<int>("status") != 200) throw new Exception(result.Value<string>("msg"));
                 try
                 {

@@ -59,7 +59,10 @@ namespace NJITSignHelper.SignMsgLib
             if (result.Value<int>("code") != 0) return;
             result = (JObject)result["datas"];
             center = new PhyLocation.Location(result["signPlaceSelected"][0].Value<double>("latitude"),
-                result["signPlaceSelected"][0].Value<double>("longitude"));
+                result["signPlaceSelected"][0].Value<double>("longitude"))
+            {
+                locName = result["signPlaceSelected"][0].Value<string>("address")
+            };
             r = result["signPlaceSelected"][0].Value<double>("radius");
 
             var fields = (JArray)result["extraField"];
@@ -90,33 +93,54 @@ namespace NJITSignHelper.SignMsgLib
             isFetchedMore = true;
         }
 
+        private string getSignature(PhyLocation.Location loc)
+        {
+            JObject jb = new JObject
+            {
+                { "systemName", client.Info.SystemName },
+                { "systemVersion", client.Info.SystemVersion },
+                { "model", client.Info.DeviceModel },
+                { "deviceId", client.Info.DeviceId.ToString() },
+                { "appVersion", client.Info.AppVersion },
+                { "lat", loc.lat },
+                { "lon", loc.lon },
+                { "userId", client.Login.StudentId }
+            };
+            string str = jb.ToString();
+            return Encrypt.Des.Encrypt(str, Client.ENCODE_KEY);
+        }
+
         public JObject Sign(FormSelection[] selections, PhyLocation.Location location)
         {
             if (!isFetchedMore) return null;
-            JObject jb = new JObject();
-
-            jb.Add("longitude", location.lon);
-            jb.Add("latitude", location.lat);
-            jb.Add("isMalposition", location - center > r ? 1 : 0);
-            jb.Add("abnormalReason", "");
-            jb.Add("signPhotoUrl", "");
-            jb.Add("isNeedExtra", 1);
-            jb.Add("position", location.locName);
-            jb.Add("uaIsCpadaily", "true");
-            jb.Add("signInstanceWid", signInstanceWid.ToString());
+            JObject jb = new JObject
+            {
+                { "longitude", location.lon },
+                { "latitude", location.lat },
+                { "isMalposition", location - center > r ? 1 : 0 },
+                { "abnormalReason", "" },
+                { "signPhotoUrl", "" },
+                { "isNeedExtra", 1 },
+                { "position", location.locName },
+                { "uaIsCpadaily", "true" },
+                { "signInstanceWid", signInstanceWid.ToString() }
+            };
 
             var fieldItems = new JArray();
 
             foreach (FormSelection sel in selections)
             {
-                var jobj = new JObject();
-                jobj.Add("extraFieldItemValue", sel.content);
-                jobj.Add("extraFieldItemWid", sel.wid);
+                var jobj = new JObject
+                {
+                    { "extraFieldItemValue", sel.content },
+                    { "extraFieldItemWid", sel.wid }
+                };
                 fieldItems.Add(jobj);
             }
 
             jb.Add("extraFieldItems", fieldItems);
-            var result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign", jb);
+            var result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign",
+                jb, getSignature(location));
             return result;
         }
     }
