@@ -42,7 +42,25 @@ namespace NJITSignHelper
                 }
                 break;
             } while (true);
-            Console.WriteLine("OK.\n登录成功。\n-----------------------\n");
+            Console.WriteLine("OK.\n登录成功。\n-----------------------\n\n提供您的经纬度和地址。");
+            while (true)
+            {
+                try
+                {
+                    Console.Write("Lat>");
+                    double lat = double.Parse(Console.ReadLine());
+                    Console.Write("Lng>");
+                    double lng = double.Parse(Console.ReadLine());
+                    Console.Write("地址>");
+                    string loc = Console.ReadLine();
+                    location = new PhyLocation.Location(lat, lng) { locName = loc };
+                    break;
+                }
+                catch
+                {
+                    Console.WriteLine("Location生成失败，请确认输入格式正确");
+                }
+            }
 
             SignMsgLib.Client client = new SignMsgLib.Client(new Client.ClientInfo()
             {
@@ -72,7 +90,7 @@ namespace NJITSignHelper
                         {
                             item.FetchMore();//获取详细信息
                         }
-                        catch(Exception err)
+                        catch (Exception err)
                         {
                             if (Regex.IsMatch(err.Message, ".*认证失败.*"))
                             {
