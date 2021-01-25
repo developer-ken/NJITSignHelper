@@ -21,6 +21,7 @@ namespace MiraiSignBot
             Console.WriteLine("[QQ]等待Mirai...");
             session.ConnectAsync(options, 2997309496).Wait();
             session.FriendMessageEvt += Session_FriendMessageEvt;
+            session.NewFriendApplyEvt += Session_NewFriendApplyEvt;
             Console.WriteLine("[QQ]已连接");
             SignQueueHandler.session = session;
             if (File.Exists("./database.bin"))
@@ -45,6 +46,12 @@ namespace MiraiSignBot
 
                 Thread.Sleep(10 * 60 * 1000);
             }
+        }
+
+        private static async System.Threading.Tasks.Task<bool> Session_NewFriendApplyEvt(MiraiHttpSession sender, INewFriendApplyEventArgs e)
+        {
+            await session.HandleNewFriendApplyAsync(e, FriendApplyAction.Allow);
+            return false;
         }
 
         private static async System.Threading.Tasks.Task<bool> Session_FriendMessageEvt(MiraiHttpSession sender, IFriendMessageEventArgs e)
