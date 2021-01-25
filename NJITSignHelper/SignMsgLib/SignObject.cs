@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace NJITSignHelper.SignMsgLib
 {
-    class SignObject
+    public class SignObject
     {
         public struct FormItem
         {
@@ -29,6 +29,7 @@ namespace NJITSignHelper.SignMsgLib
         public double r;
         public bool expired;
         public DateTime deadLine;
+        public string Title;
         public bool isFetchedMore { get; private set; }
 
         public SignObject(JObject jb, Client client)
@@ -90,6 +91,7 @@ namespace NJITSignHelper.SignMsgLib
                 itemList.Add(item);
             }
             form = itemList.ToArray();
+            Title = result.Value<string>("taskName");
             isFetchedMore = true;
         }
 

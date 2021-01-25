@@ -10,7 +10,8 @@ using System.Web;
 
 namespace NJITSignHelper.SignMsgLib
 {
-    class LoginHandler
+    [Serializable]
+    public class LoginHandler
     {
         public CookieCollection cookies { get; private set; }
         public string MOD_AUTH_CAS { get; private set; }

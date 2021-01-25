@@ -9,7 +9,8 @@ using System.Security.Cryptography;
 
 namespace NJITSignHelper.SignMsgLib
 {
-    class Client
+    [Serializable]
+    public class Client
     {
         public const int SCHOOL_CODE = 11276;
         public const string ENCODE_KEY = "b3L26XNL";
@@ -20,6 +21,7 @@ namespace NJITSignHelper.SignMsgLib
         public ClientInfo Info { get; private set; }
         public LoginHandler Login { get; private set; }
 
+        [Serializable]
         public struct ClientInfo
         {
             public string SystemName, SystemVersion;
@@ -75,7 +77,16 @@ namespace NJITSignHelper.SignMsgLib
             Info = inf;
         }
 
-        public SignObject[] getSignList(int lastupdate = 0)
+        int lastUpdate = 0;
+
+        public SignObject[] getSignList()
+        {
+            var result = getSignList(lastUpdate);
+            lastUpdate = Now();
+            return result;
+        }
+
+        public SignObject[] getSignList(int lastupdate)
         {
             /*
 {
@@ -140,6 +151,10 @@ namespace NJITSignHelper.SignMsgLib
                 tmp.Append(i.ToString("x2"));
             }
             return tmp.ToString();
+        }
+        public static int Now()
+        {
+            return (int)(DateTime.Now - TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1))).TotalSeconds;
         }
     }
 }

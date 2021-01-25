@@ -8,10 +8,10 @@ using static NJITSignHelper.SignMsgLib.SignObject;
 
 namespace NJITSignHelper
 {
-    class Program
+    public class Program
     {
         private static PhyLocation.Location location;
-        const string SERVICE = "https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign";
+        public const string SERVICE = "https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign";
 
 
         static void Main(string[] args)
