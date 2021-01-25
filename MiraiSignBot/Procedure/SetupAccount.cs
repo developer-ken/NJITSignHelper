@@ -16,6 +16,7 @@ namespace MiraiSignBot.Procedure
 
         public override void Abort()
         {
+            Console.WriteLine("["+qq+"]SetupAccount 操作已取消");
             IsFinished = true;
             session.SendFriendMessageAsync(qq, new PlainMessage("ℹ操作已取消\n" +
                     "如有疑问，请联系QQ:1250542735")).Wait();
@@ -25,6 +26,7 @@ namespace MiraiSignBot.Procedure
         {
             try
             {
+                Console.WriteLine("[" + qq + "]SetupAccount 流程开始");
                 int studentid = -1;
                 string passwd = "";
                 session.SendFriendMessageAsync(qq,
@@ -41,6 +43,7 @@ namespace MiraiSignBot.Procedure
                     }
                     else break;
                 }
+                Console.WriteLine("[" + qq + "]SetupAccount-学号已获取");
                 session.SendFriendMessageAsync(qq, new PlainMessage("接下来，您需要提供您<NJIT统一认证系统>的密码。\n" +
                     "⚠只有一次机会，如果登录失败就会被拉黑。请先确认您的密码正确。\n" +
                     "ℹ现在，请发送您的密码。")).Wait();
@@ -51,9 +54,11 @@ namespace MiraiSignBot.Procedure
                 {
                     session.SendFriendMessageAsync(qq, new PlainMessage("⚠登录失败，您无法继续使用本服务。\n" +
                         "如有疑问，请联系QQ:1250542735")).Wait();
+                    Console.WriteLine("[" + qq + "]SetupAccount-登录失败");
                     IsFinished = true;
                     return;
                 }
+                Console.WriteLine("[" + qq + "]SetupAccount-登录成功");
                 session.SendFriendMessageAsync(qq, new PlainMessage("✔登录成功。\n" +
                         "我们需要您的GPS坐标来帮您上报信息。\n" +
                         "正确的格式是Lat,Lng，且必须使用WGS84标准，例如31.928509,118.887844。请【务必使用英文半角逗号】。\n" +
@@ -65,6 +70,7 @@ namespace MiraiSignBot.Procedure
                     location = ReadLocation()
                 }))
                 {
+                    Console.WriteLine("[" + qq + "]SetupAccount 流程完成");
                     session.SendFriendMessageAsync(qq, new PlainMessage("✔您的NJIT账号已经绑定，系统会为您自动签到。\n" +
                         "ℹ我们不保证总能为您成功签到，请自行定期检查您的签到情况。我们不为您使用本服务造成的任何后果负责。")).Wait();
                     session.SendFriendMessageAsync(qq,
@@ -74,6 +80,7 @@ namespace MiraiSignBot.Procedure
             }
             catch(Exception err)
             {
+                Console.WriteLine("[" + qq + "]SetupAccount Exception:"+err.Message+"\n"+err.StackTrace);
                 session.SendFriendMessageAsync(qq,
                         new PlainMessage("⚠致命错误："+err.Message+"\n请联系QQ:1250542735\n"+err.StackTrace)).Wait();
             }
@@ -111,6 +118,7 @@ namespace MiraiSignBot.Procedure
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("[" + qq + "]SetupAccount-ReadLocation-无法获取坐标信息");
                     session.SendFriendMessageAsync(qq,
                         new PlainMessage("⚠无法获取地址信息：坐标无效或系统故障，请重试。\n调试信息:" + e.Message + "\n" +
                         "如有疑问请联系QQ:1250542735")).Wait();
