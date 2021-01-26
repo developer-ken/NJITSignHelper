@@ -77,7 +77,7 @@ namespace NJITSignHelper.SignMsgLib
             Info = inf;
         }
 
-        int lastUpdate = 0;
+        public int lastUpdate = 0;
 
         public SignObject[] getSignList()
         {

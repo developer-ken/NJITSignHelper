@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using static NJITSignHelper.SignMsgLib.SignObject;
 
 namespace MiraiSignBot
@@ -34,9 +35,11 @@ namespace MiraiSignBot
                     SystemVersion = "10",
                     AppVersion = "8.2.17",
                     DeviceModel = "Peach X",
-                    DeviceId = Guid.NewGuid()//生成新的硬件ID
-                },
-                user.account);
+                    DeviceId = Guid.NewGuid(),//生成新的硬件ID
+                },user.account)
+                {
+                    lastUpdate = Now()
+                };
                 queue.Add(user.qq, user);
                 Save();
                 return true;
@@ -96,7 +99,7 @@ namespace MiraiSignBot
                             if (item.expired)
                             {
                                 Console.WriteLine("\t<" + item.signWid + ">已过期，不处理：" + item.deadLine.ToString());
-                                continue;
+                                //continue;
                             }
                             Console.WriteLine("\t<" + item.signWid + ">开始处理");
                             try
@@ -136,23 +139,29 @@ namespace MiraiSignBot
                                         }
                                     }
                                 }
+                                string selectionsstr = "";
+                                int iii = 0;
+                                foreach (FormSelection sel in selections)
+                                {
+                                    iii++;
+                                    selectionsstr += "[" + iii + "]" + sel.content + "\n";
+                                }
+                                string sendMsg = item.Title + "\n" + selectionsstr;
+                                session.SendFriendMessageAsync(u.qq,
+                                        new PlainMessage(sendMsg)).Wait();
                                 var res = item.Sign(selections.ToArray(), location);
                                 if (res.Value<long>("code") == 0)
                                 {
-                                    string selectionsstr = "";
-                                    foreach (FormSelection sel in selections)
-                                    {
-                                        selectionsstr += selections + "\n";
-                                    }
                                     Console.WriteLine("\t->已签到");
                                     session.SendFriendMessageAsync(u.qq,
-                                        new PlainMessage(item.Title + "\n" + selectionsstr + "✔已签到\n回复TD取消自动签到服务"));
+                                        new PlainMessage("✔已签到\n回复TD取消自动签到服务")).Wait();
+
                                 }
                                 else
                                 {
                                     Console.WriteLine("\t<" + res.Value<long>("code") + ">无法签到：" + res.Value<string>("message"));
                                     session.SendFriendMessageAsync(u.qq,
-                                        new PlainMessage(item.Title + "\n" + res.Value<string>("message") + "❌无法签到\n回复TD取消自动签到服务"));
+                                        new PlainMessage("❌无法签到\n" + res.Value<string>("message") + "\n回复TD取消自动签到服务"));
                                 }
                             }
                             catch (Exception err)
@@ -169,6 +178,7 @@ namespace MiraiSignBot
                             "错误信息：" + err.Message + "\n" +
                             "" + err.StackTrace));
                     }
+                    Thread.Sleep(2 * 1000);//等待两秒
                 }
         }
 

@@ -12,14 +12,15 @@ namespace MiraiSignBot
     {
         public static MiraiHttpSession session;
         private static Dictionary<long, Procedure.Procedure> procedures = new Dictionary<long, Procedure.Procedure>();
-
+        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.1.204", 1234, "Ken1250542735");
+        private static long qq = 2997309496;
         static void Main(string[] args)
         {
             Console.WriteLine("[QQ]初始化...");
-            var options = new MiraiHttpSessionOptions("192.168.1.204", 1234, "Ken1250542735");
             session = new MiraiHttpSession();
             Console.WriteLine("[QQ]等待Mirai...");
-            session.ConnectAsync(options, 2997309496).Wait();
+            session.ConnectAsync(options, qq).Wait();
+            session.DisconnectedEvt += Session_DisconnectedEvt;
             session.FriendMessageEvt += Session_FriendMessageEvt;
             session.NewFriendApplyEvt += Session_NewFriendApplyEvt;
             Console.WriteLine("[QQ]已连接");
@@ -40,12 +41,22 @@ namespace MiraiSignBot
 
             while (true)
             {
-                Console.WriteLine("[Queue]队列处理器已加载");
                 SignQueueHandler.__ProceedQueue();
-                Console.WriteLine("[Queue]队列处理器已完成，10分钟后重试。");
-
+                SignQueueHandler.Save();
                 Thread.Sleep(10 * 60 * 1000);
             }
+        }
+
+        private static async System.Threading.Tasks.Task<bool> Session_DisconnectedEvt(MiraiHttpSession sender, Exception e)
+        {
+            try
+            {
+                Console.WriteLine("[Connection]连接意外断开：" + e.Message + "\n" +
+                    "[Connection]断线重连...");
+                sender.ConnectAsync(options, qq);
+            }
+            catch { }
+            return false;
         }
 
         private static async System.Threading.Tasks.Task<bool> Session_NewFriendApplyEvt(MiraiHttpSession sender, INewFriendApplyEventArgs e)
