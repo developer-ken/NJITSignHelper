@@ -5,6 +5,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace MiraiSignBot
 {
@@ -49,13 +50,19 @@ namespace MiraiSignBot
 
         private static async System.Threading.Tasks.Task<bool> Session_DisconnectedEvt(MiraiHttpSession sender, Exception e)
         {
-            try
-            {
-                Console.WriteLine("[Connection]连接意外断开：" + e.Message + "\n" +
-                    "[Connection]断线重连...");
-                sender.ConnectAsync(options, qq);
-            }
-            catch { }
+            while (true)
+                try
+                {
+                    Console.WriteLine("[Connection]连接意外断开：" + e.Message + "\n" +
+                        "[Connection]断线重连...");
+                    await sender.ConnectAsync(options, qq);
+                    break;
+                }
+                catch(Exception err){
+                    Console.WriteLine("[Connection]失败：" + err.Message + "\n" +
+                        "[Connection]断线重连...");
+                    await Task.Delay(500);
+                }
             return false;
         }
 
