@@ -102,10 +102,17 @@ namespace MiraiSignBot
                         SignQueueHandler.RemoveAccount(e.Sender.Id);
                         break;
                     case "CHECK":
+                    case "检查":
+                    case "复核":
+                    case "复查":
+                        await session.SendFriendMessageAsync(e.Sender.Id,
+                        new PlainMessage("好的，我会再次检查您的签到列表。"));
                         SignQueueHandler.ReCheckUser(e.Sender.Id);
                         break;
                     case "谁没签到":
-                        try{
+                        try
+                        {
+                            Console.WriteLine("[" + e.Sender.Id + "] 正在执行签到广谱查询...");
                             await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
                                 "稍等，我查一下..."
                                 ));
@@ -119,9 +126,13 @@ namespace MiraiSignBot
                                     unsignedStr += i.ToString() + ",";
                                     unsignList.Add(i);
                                 }
+                                Thread.Sleep(new Random().Next(500, 1000));
                             }
+                            Console.Write("[" + e.Sender.Id + "] 查好了，");
                             if (unsignList.Count == 0)
                             {
+
+                                Console.WriteLine("所有人都签了");
                                 await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
                                     "除过期签到外，所有人都签到了"
                                     ));
@@ -129,16 +140,17 @@ namespace MiraiSignBot
                             else
                             {
                                 unsignedStr = unsignedStr[0..^1];
+                                Console.WriteLine("这些人没签：" + unsignedStr);
                                 await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
                                     "这些人没有签到：\n" + unsignedStr
                                     ));
                             }
                         }
-                        catch(Exception err)
+                        catch (Exception err)
                         {
                             session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
-                                "额...我这边好像出问题了。如果你需要技术帮助，可以提供下面的信息:\n"+
-                                err.Message+"\n"+
+                                "额...我这边好像出问题了。如果你需要技术帮助，可以提供下面的信息:\n" +
+                                err.Message + "\n" +
                                 err.StackTrace
                                 ));
                         }

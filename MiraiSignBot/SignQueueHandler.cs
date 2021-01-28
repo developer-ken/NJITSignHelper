@@ -55,14 +55,12 @@ namespace MiraiSignBot
                 {
                     queue.Remove(qq);
                     session.SendFriendMessageAsync(qq,
-                        new PlainMessage("✔已移除您绑定的NJIT账号，系统将不会继续为您签到。\n" +
-                        "如有疑问请联系QQ:1250542735"));
+                        new PlainMessage("✔我已删除了你的NJIT账号，不会继续为您签到。"));
                     Save();
                     return true;
                 }
                 session.SendFriendMessageAsync(qq,
-                        new PlainMessage("⚠您没有绑定过任何学号。\n" +
-                        "如有疑问请联系QQ:1250542735"));
+                        new PlainMessage("⚠我不知道你的NJIT账号。"));
                 return false;
             }
         }
@@ -94,13 +92,17 @@ namespace MiraiSignBot
         {
             if (queue.ContainsKey(qq))
             {
+                Console.WriteLine("[" + qq + "] 用户(" + queue[qq].account.StudentId + ")主动触发签到检查");
                 queue[qq].cli.lastUpdate = 0;//刷新全部
-                CheckUser(queue[qq]);
+                CheckUser(queue[qq], true);
             }
             else
+            {
+                Console.WriteLine("[" + qq + "] 用户主动触发签到检查，但没有绑定的StudentId可供查询。");
                 session.SendFriendMessageAsync(qq,
-                        new PlainMessage("⚠您没有绑定过任何学号。\n" +
-                        "如有疑问请联系QQ:1250542735"));
+                        new PlainMessage("⚠我不知道你的NJIT账号，所以没法给你签到。\n" +
+                        "如果你想告诉我你的NJIT账号，请说“自动签到”"));
+            }
         }
 
         public static void CheckUser(User u, bool noticeAnyway = false)
@@ -111,7 +113,7 @@ namespace MiraiSignBot
                 var han = u.account;
                 var location = u.location;
                 var list = client.getSignList();
-                Console.WriteLine("[" + u.qq + "] 检测到" + list.Length + "个未签的签到");
+                Console.WriteLine("[" + u.qq + "] 检测到" + list.Length + "个签到");
                 int expires = 0;
                 int handles = 0;
                 foreach (var item in list)
@@ -125,13 +127,6 @@ namespace MiraiSignBot
                     {
                         expires++;
                         Console.WriteLine("\t<" + item.signWid + ">已过期，不处理：" + item.DeadLine.ToString());
-                        if (expires + handles >= list.Length - 1 && noticeAnyway)
-                        {
-                            Console.WriteLine("\t<" + item.signWid + ">-" + expires + "个签到均已过期");
-                            session.SendFriendMessageAsync(u.qq,
-                            new PlainMessage("⚠您所有未签的签到(" + expires + ")均已过期"));
-                            break;
-                        }
                         continue;
                     }
                     Console.WriteLine("\t<" + item.signWid + ">开始处理");
@@ -209,6 +204,12 @@ namespace MiraiSignBot
                         session.SendFriendMessageAsync(u.qq,
                                 new PlainMessage("❌无法签到\n" + err.Message + "\n回复TD取消自动签到服务\n" + err.StackTrace));
                     }
+                }
+                if (expires + handles >= list.Length - 1 && noticeAnyway)
+                {
+                    Console.WriteLine("[" + u.qq + "]" + expires + "个签到均已过期");
+                    session.SendFriendMessageAsync(u.qq,
+                    new PlainMessage("⚠您所有未签的签到(" + expires + ")均已过期"));
                 }
             }
             catch (Exception err)
