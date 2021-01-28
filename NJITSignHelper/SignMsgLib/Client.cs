@@ -132,8 +132,55 @@ namespace NJITSignHelper.SignMsgLib
                 }
                 foreach (JObject jb in (JArray)result["msgsNew"])
                 {
-                    if (!jb.Value<bool>("isHandled"))//仅处理没有签过的到
+                    try
+                    {
                         reslist.Add(new SignObject(jb, this));
+                    }
+                    catch { }
+                }
+                if (result["page"].Value<int>("size") < step) break;
+            } while (true);
+            return reslist.ToArray();
+        }
+
+        public SignObject[] getSignListFor(int lastupdate, int studentId)
+        {
+            List<SignObject> reslist = new List<SignObject>();
+            int start = 0;
+            int step = 200;
+            do
+            {
+                var payload = new JObject();
+                payload.Add("userId", studentId.ToString());
+                payload.Add("schoolCode", SCHOOL_CODE.ToString());
+                payload.Add("sign", MD5Encrypt(ACCESS_TOKEN + SCHOOL_CODE.ToString() + studentId.ToString()));
+                payload.Add("timestamp", lastupdate.ToString());
+
+                var page = new JObject();
+                page.Add("start", start);
+                page.Add("size", step);
+                page.Add("total", "");
+                payload.Add("page", page);
+
+                var result = HTTP_POST(
+                    "http://messageapi.campusphere.net/message_pocket_web/V2/mp/restful/mobile/message/extend/get",
+                    payload);
+                if (result.Value<int>("status") != 200) throw new Exception(result.Value<string>("msg"));
+                try
+                {
+                    if (result["page"] == null || ((JArray)result["msgsNew"]).Count == 0) break;
+                }
+                catch
+                {
+                    break;
+                }
+                foreach (JObject jb in (JArray)result["msgsNew"])
+                {
+                    try
+                    {
+                        reslist.Add(new SignObject(jb, this));
+                    }
+                    catch { }
                 }
                 if (result["page"].Value<int>("size") < step) break;
             } while (true);

@@ -58,7 +58,8 @@ namespace MiraiSignBot
                     await sender.ConnectAsync(options, qq);
                     break;
                 }
-                catch(Exception err){
+                catch (Exception err)
+                {
                     Console.WriteLine("[Connection]失败：" + err.Message + "\n" +
                         "[Connection]断线重连...");
                     await Task.Delay(500);
@@ -100,8 +101,50 @@ namespace MiraiSignBot
                     case "TD":
                         SignQueueHandler.RemoveAccount(e.Sender.Id);
                         break;
+                    case "CHECK":
+                        SignQueueHandler.ReCheckUser(e.Sender.Id);
+                        break;
+                    case "谁没签到":
+                        try{
+                            await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
+                                "稍等，我查一下..."
+                                ));
+                            List<int> unsignList = new List<int>();
+                            string unsignedStr = "";
+                            for (int i = 208200601; i <= 208200641; i++)
+                            {
+                                var data = AnonymousData.AnalyzeSignListFor(i, e.Sender.Id);
+                                if (data.AviUnsigned > 0)
+                                {
+                                    unsignedStr += i.ToString() + ",";
+                                    unsignList.Add(i);
+                                }
+                            }
+                            if (unsignList.Count == 0)
+                            {
+                                await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
+                                    "除过期签到外，所有人都签到了"
+                                    ));
+                            }
+                            else
+                            {
+                                unsignedStr = unsignedStr[0..^1];
+                                await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
+                                    "这些人没有签到：\n" + unsignedStr
+                                    ));
+                            }
+                        }
+                        catch(Exception err)
+                        {
+                            session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
+                                "额...我这边好像出问题了。如果你需要技术帮助，可以提供下面的信息:\n"+
+                                err.Message+"\n"+
+                                err.StackTrace
+                                ));
+                        }
+                        break;
                     default:
-                        session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage("对不起，我听不懂。有疑问请联系QQ:1250542735"));
+
                         break;
                 }
             }

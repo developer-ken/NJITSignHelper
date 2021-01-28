@@ -25,11 +25,12 @@ namespace NJITSignHelper.SignMsgLib
         public int signWid, signInstanceWid;
         public FormItem[] form;
         public Client client;
-        public PhyLocation.Location center;
+        public PhyLocation.Location Center;
         public double r;
-        public bool expired;
-        public DateTime deadLine;
+        public bool Expired;
+        public DateTime DeadLine;
         public string Title;
+        public bool Handled;
         public bool isFetchedMore { get; private set; }
 
         public SignObject(JObject jb, Client client)
@@ -41,10 +42,11 @@ namespace NJITSignHelper.SignMsgLib
             signInstanceWid = int.Parse(m.Groups[2].Value);
             isFetchedMore = false;
             Match mm = Regex.Match(jb.Value<string>("content"), "([0-9]{4})年([0-9]{1,})月([0-9]{1,})日 *([0-9]{1,}):([0-9]{1,})");
-            deadLine = new DateTime(int.Parse(mm.Groups[1].Value),
+            DeadLine = new DateTime(int.Parse(mm.Groups[1].Value),
                 int.Parse(mm.Groups[2].Value), int.Parse(mm.Groups[3].Value), int.Parse(mm.Groups[4].Value),
                 int.Parse(mm.Groups[5].Value), 0);
-            expired = deadLine <= DateTime.Now;
+            Expired = DeadLine <= DateTime.Now;
+            Handled = jb.Value<bool>("isHandled");
         }
 
         public void FetchMore()
@@ -59,7 +61,7 @@ namespace NJITSignHelper.SignMsgLib
             }
             if (result.Value<int>("code") != 0) return;
             result = (JObject)result["datas"];
-            center = new PhyLocation.Location(result["signPlaceSelected"][0].Value<double>("latitude"),
+            Center = new PhyLocation.Location(result["signPlaceSelected"][0].Value<double>("latitude"),
                 result["signPlaceSelected"][0].Value<double>("longitude"))
             {
                 locName = result["signPlaceSelected"][0].Value<string>("address")
@@ -119,7 +121,7 @@ namespace NJITSignHelper.SignMsgLib
             {
                 { "longitude", location.lon },
                 { "latitude", location.lat },
-                { "isMalposition", location - center > r ? 1 : 0 },
+                { "isMalposition", location - Center > r ? 1 : 0 },
                 { "abnormalReason", "" },
                 { "signPhotoUrl", "" },
                 { "isNeedExtra", 1 },

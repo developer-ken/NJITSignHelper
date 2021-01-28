@@ -78,9 +78,9 @@ namespace NJITSignHelper
                 Console.WriteLine("[SignList] 检测到" + list.Length + "个未签的签到");
                 foreach (var item in list)
                 {
-                    if (item.expired)
+                    if (item.Expired)
                     {
-                        Console.WriteLine("\t<" + item.signWid + ">已过期，不处理：" + item.deadLine.ToString());
+                        Console.WriteLine("\t<" + item.signWid + ">已过期，不处理：" + item.DeadLine.ToString());
                         continue;
                     }
                     Console.WriteLine("\t<" + item.signWid + ">开始处理");
