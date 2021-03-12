@@ -202,7 +202,7 @@ namespace MiraiSignBot
                     {
                         Console.WriteLine("\t<EXCEPTION>无法签到：" + err.Message);
                         session.SendFriendMessageAsync(u.qq,
-                                new PlainMessage("❌无法签到\n" + err.Message + "\n回复TD取消自动签到服务\n" + err.StackTrace));
+                                new PlainMessage(item.Title + "\n❌无法签到\n" + err.Message + "\n回复TD取消自动签到服务\n" + err.StackTrace));
                     }
                 }
                 if (expires + handles >= list.Length - 1 && noticeAnyway)

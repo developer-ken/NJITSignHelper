@@ -51,9 +51,9 @@ namespace NJITSignHelper.PhyLocation
 
         public static string getLocName(Location loc)
         {
-            string urlString = "http://restapi.amap.com/v3/geocode/regeo?key=8325164e247e15eea68b59e89200988b&s=rsv3&location=" + loc.lon + "," + loc.lat + "&radius=0&platform=JS&logversion=2.0&sdkversion=1.3&appname=http%3A%2F%2Flbs.amap.com%2Fconsole%2Fshow%2Fpicker&csid=49851531-2AE3-4A3B-A8C8-675A69BCA316";
+            string urlString = "http://api.map.baidu.com/geocoder/v2/?output=json&ak=WEc8RlPXzSifaq9RHxE1WW7lRKgbid6Y&location=" + loc.lat + "," + loc.lon;
             JObject jb = (JObject)JsonConvert.DeserializeObject(HTTP_GET(urlString));
-            return jb["regeocode"].Value<string>("formatted_address");
+            return jb["result"].Value<string>("formatted_address");
         }
 
         public static string HTTP_GET(string url)

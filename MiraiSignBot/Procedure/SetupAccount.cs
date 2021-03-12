@@ -60,7 +60,7 @@ namespace MiraiSignBot.Procedure
                 session.SendFriendMessageAsync(qq, new PlainMessage("✔很棒，我拿到你的CAS授权了。\n")).Wait();
                 Random r = new Random();
                 session.SendFriendMessageAsync(qq, new PlainMessage("我要知道你在哪里。\n" +
-                        "我需要你的WGS84坐标(Lat,Lng)，比如31." + r.Next(100000, 999999) + ",118." + r.Next(100000, 999999) + "\n" +
+                        "我需要你的WGS84坐标(Lat,Lng)，比如31." + r.Next(100000, 999999) + ",118." + r.Next(100000, 999999) + "\n南京工程学院坐标约为<31.931,118.876>\n" +
                         "ℹ请发送你的坐标")).Wait();
                 if (SignQueueHandler.AddAccount(new Struct.User()
                 {
@@ -119,7 +119,8 @@ namespace MiraiSignBot.Procedure
                 {
                     Console.WriteLine("[" + qq + "]SetupAccount-ReadLocation-无法获取坐标信息");
                     session.SendFriendMessageAsync(qq,
-                        new PlainMessage("⚠我没法验证你的地址，可能是你的地址错了，或者系统出了问题。请重试。\n调试信息:" + e.Message + "\n" +
+                        new PlainMessage("⚠我没法验证你的地址，可能是你的地址错了，或者系统出了问题。请重试。\n调试信息:" + e.Message + "\n" + 
+                        e.StackTrace + "\n" +
                         "如有疑问请联系QQ:1250542735")).Wait();
                 }
             }

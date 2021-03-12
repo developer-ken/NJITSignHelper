@@ -13,7 +13,7 @@ namespace MiraiSignBot
     {
         public static MiraiHttpSession session;
         private static Dictionary<long, Procedure.Procedure> procedures = new Dictionary<long, Procedure.Procedure>();
-        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.1.204", 1234, "Ken1250542735");
+        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.1.234", 1234, "Ken1250542735");
         private static long qq = 2997309496;
         static void Main(string[] args)
         {
