@@ -184,7 +184,7 @@ namespace MiraiSignBot
                         {
                             Console.WriteLine("\t<EXCEPTION>发送消息失败：" + err.Message);
                         }
-                        var res = item.Sign(selections.ToArray(), location);
+                        var res = item.Sign(selections.ToArray(), location.ToBD09());
                         if (res.Value<long>("code") == 0)
                         {
                             Console.WriteLine("\t->已签到");

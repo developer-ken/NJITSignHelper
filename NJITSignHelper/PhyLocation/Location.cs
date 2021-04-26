@@ -46,7 +46,13 @@ namespace NJITSignHelper.PhyLocation
 
         public Location ToGCJ02()
         {
-            return GPSChange.WGS84_to_GCJ02(lat,lon);
+            return GPSChange.WGS84_to_GCJ02(lat, lon);
+        }
+
+        public Location ToBD09()
+        {
+            var vv = GPSChange.WGS84_to_GCJ02(lat, lon);
+            return GPSChange.GCJ02_to_BD09(vv.lat, vv.lon);
         }
 
         public static string getLocName(Location loc)
