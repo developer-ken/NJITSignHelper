@@ -16,10 +16,12 @@ namespace NJITSignHelper.SignMsgLib
         public const string ENCODE_KEY = "b3L26XNL";
         public const string ACCESS_TOKEN = "5e5b7d74e7b43fc22a851e615fd2792f";
         public const string APPID = "amp-ios-11276";
-        public const string UA = "Mozilla/5.0 (Linux; Android 10; Mi 10 Build/QKQ1.191117.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.101 Mobile Safari/537.36  cpdaily/8.2.17 wisedu/8.2.17 okhttp/3.12.4";
+        public const string UA = "Mozilla/5.0 (Linux; Android 10; Mi 10 Build/QKQ1.191117.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.101 Mobile Safari/537.36 okhttp/3.12.4";
 
         public ClientInfo Info { get; private set; }
         public LoginHandler Login { get; private set; }
+
+        private CookieContainer InnerCookieContainer;
 
         [Serializable]
         public struct ClientInfo
@@ -40,8 +42,10 @@ namespace NJITSignHelper.SignMsgLib
             req.Headers.Add("accessToken", ACCESS_TOKEN);
             req.Headers.Add("appId", APPID);
             req.Headers.Add("Cpdaily-Extension", CpdCrypt);
-            req.CookieContainer = new CookieContainer();
-            req.CookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS, "/", ".njit.campusphere.net"));
+            req.Headers.Add("extension", "1");
+            req.Headers.Add("CpdailyStandAlone", "0");
+            req.Headers.Add("tenantId", "njit");
+            req.CookieContainer = InnerCookieContainer;
 
             req.UserAgent = UA;
 
@@ -75,6 +79,8 @@ namespace NJITSignHelper.SignMsgLib
         {
             Login = login;
             Info = inf;
+            InnerCookieContainer = new CookieContainer();
+            InnerCookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS, "/", ".njit.campusphere.net"));
         }
 
         public int lastUpdate = 0;

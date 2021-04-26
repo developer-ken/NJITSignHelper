@@ -38,6 +38,7 @@ namespace NJITSignHelper.SignMsgLib
             string result = "";
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
             req.AllowAutoRedirect = false;
+            req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36";
             req.Method = "POST";
             req.ContentType = "application/x-www-form-urlencoded";
             req.CookieContainer = new CookieContainer();
@@ -100,6 +101,7 @@ namespace NJITSignHelper.SignMsgLib
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
             req.AllowAutoRedirect = false;
             req.Method = "GET";
+            req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36";
             try
             {
                 if (cookies != null)

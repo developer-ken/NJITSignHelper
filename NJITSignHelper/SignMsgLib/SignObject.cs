@@ -127,7 +127,8 @@ namespace NJITSignHelper.SignMsgLib
                 { "isNeedExtra", 1 },
                 { "position", location.locName },
                 { "uaIsCpadaily", "true" },
-                { "signInstanceWid", signInstanceWid.ToString() }
+                { "signInstanceWid", signInstanceWid.ToString() },
+                { "signVersion", "1.0.0" }
             };
 
             var fieldItems = new JArray();

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using static NJITSignHelper.SignMsgLib.SignObject;
@@ -74,6 +75,10 @@ namespace NJITSignHelper
             while (true)
             {
                 var list = client.getSignList(last);
+                /*list = (from n in list
+                        where !n.Handled
+                        select n
+                       ).ToArray();*/
                 last = Now();
                 Console.WriteLine("[SignList] 检测到" + list.Length + "个未签的签到");
                 foreach (var item in list)
