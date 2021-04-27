@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MiraiSignBot": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false
+    }
+  }
+}

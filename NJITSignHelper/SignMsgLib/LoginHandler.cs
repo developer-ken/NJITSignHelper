@@ -14,10 +14,10 @@ namespace NJITSignHelper.SignMsgLib
     public class LoginHandler
     {
         public CookieCollection cookies { get; private set; }
-        public string MOD_AUTH_CAS { get; private set; }
+        //public string MOD_AUTH_CAS { get; private set; }
+        private Dictionary<string, string> _secondaryCasCache;
         public int StudentId { get; private set; }
-        public string ServiceUrl { get; private set; }
-
+        private string defaultService;
         private string Passwd;
         private string EncodeKey;
         public struct WebResult
@@ -31,6 +31,7 @@ namespace NJITSignHelper.SignMsgLib
         public LoginHandler()
         {
             cookies = new CookieCollection();
+            _secondaryCasCache = new Dictionary<string, string>();
         }
 
         public WebResult HTTP_POST(string url, Dictionary<string, string> payload)
@@ -130,6 +131,8 @@ namespace NJITSignHelper.SignMsgLib
             catch (WebException exp)
             {
                 var resp = (HttpWebResponse)exp.Response;
+                
+                
                 cookies.Add(resp.Cookies);
                 return new WebResult()
                 {
@@ -165,6 +168,28 @@ namespace NJITSignHelper.SignMsgLib
             return Encrypt.Aes.Encrypt(Encrypt.Random.String(64) + password, EncodeKey, Encrypt.Random.String(16));
         }
 
+        public string MOD_AUTH_CAS(string serviceUrl,bool nocache = false)
+        {
+            if (_secondaryCasCache == null) _secondaryCasCache = new Dictionary<string, string>();//兼容已序列化的数据
+            if ((!nocache) && _secondaryCasCache.ContainsKey(serviceUrl))
+            {
+                return _secondaryCasCache[serviceUrl];
+            }
+            else if (ReLogin(serviceUrl))
+            {
+                return _secondaryCasCache[serviceUrl];
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        public string MOD_AUTH_CAS(bool nocache = false)
+        {
+            return MOD_AUTH_CAS(defaultService, nocache);
+        }
+
         /// <summary>
         /// 尝试使用已有Cookie直接登录，成功则返回True。
         /// </summary>
@@ -172,14 +197,14 @@ namespace NJITSignHelper.SignMsgLib
         /// <returns>代表是否成功的bool值</returns>
         public bool Login(string serviceurl)
         {
+            if (defaultService == null) defaultService = serviceurl;
             var getForm = GetLoginForm(serviceurl);
-            ServiceUrl = serviceurl;
 
             Match ticket = Regex.Match(getForm.Location, "\\?ticket=([\\w-]{1,})");
             if (ticket.Success)
             {
-                MOD_AUTH_CAS = ticket.Groups[1].Value;
-                ActivateCas(MOD_AUTH_CAS);
+                _RegCas(serviceurl, ticket.Groups[1].Value);
+                ActivateCas(serviceurl, ticket.Groups[1].Value);
                 return true;
             }
             return false;
@@ -194,11 +219,10 @@ namespace NJITSignHelper.SignMsgLib
         /// <returns>代表是否成功的bool值</returns>
         public bool Login(int studentid, string passwd, string serviceurl)
         {
+            if (defaultService == null) defaultService = serviceurl;
             StudentId = studentid;
             Passwd = passwd;
-            ServiceUrl = serviceurl;
             if (Login(serviceurl)) return true;
-
             loginForm["username"] = studentid.ToString();
             loginForm["password"] = EncodePassword(passwd);
             var loginResult = HTTP_POST(
@@ -208,25 +232,33 @@ namespace NJITSignHelper.SignMsgLib
             Match ticket = Regex.Match(loginResult.Location, "\\?ticket=([\\w-]{1,})");
             if (ticket.Success)
             {
-                MOD_AUTH_CAS = ticket.Groups[1].Value;
-                ActivateCas(MOD_AUTH_CAS);
+                _RegCas(serviceurl, ticket.Groups[1].Value);
+                ActivateCas(serviceurl, ticket.Groups[1].Value);
                 return true;
             }
             return false;
         }
 
-        public void ActivateCas(string mod_auth_cas)
+        public HttpStatusCode ActivateCas(string service, string mod_auth_cas)
         {
-            HTTP_GET(ServiceUrl + "?ticket=" + mod_auth_cas);
+            return HTTP_GET(service + "?ticket=" + mod_auth_cas).StatusCode;
+        }
+
+        private void _RegCas(string service, string cas)
+        {
+            if (_secondaryCasCache.ContainsKey(service))
+                _secondaryCasCache[service] = cas;
+            else
+                _secondaryCasCache.Add(service, cas);
         }
 
         /// <summary>
         /// 使用上一次登录的信息尝试重新登录
         /// </summary>
         /// <returns>代表是否成功的bool值</returns>
-        public bool ReLogin()
+        public bool ReLogin(string serviceUrl)
         {
-            return Login(StudentId, Passwd, ServiceUrl);
+            return Login(StudentId, Passwd, serviceUrl);
         }
     }
 }

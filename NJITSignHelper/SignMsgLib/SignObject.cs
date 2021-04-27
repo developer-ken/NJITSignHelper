@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace NJITSignHelper.SignMsgLib
 {
-    public class SignObject
+    public class SignObject : IEquatable<SignObject>
     {
         public struct FormItem
         {
@@ -54,7 +55,39 @@ namespace NJITSignHelper.SignMsgLib
             var jb = new JObject();
             jb.Add("signInstanceWid", signInstanceWid.ToString());
             jb.Add("signWid", signWid.ToString());
-            var result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance", jb);
+            JObject result = null;
+        retry:
+            try
+            {
+                result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance", jb, CAS: client.Login.MOD_AUTH_CAS("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance"));
+            }
+            catch (System.Net.WebException ex)
+            {
+                var resp = (System.Net.HttpWebResponse)ex.Response;
+                if (
+                    (resp.StatusCode == System.Net.HttpStatusCode.Found ||
+                    resp.StatusCode == System.Net.HttpStatusCode.MovedPermanently
+                    )//是跳转
+                    &&
+                    (resp.Headers["Location"] != null &&
+                    Regex.IsMatch(resp.Headers["Location"], ".*authserver/login\\?service=.*")
+                    )//跳转地址正确
+                    )
+                {
+                    Console.WriteLine("\t\tCAS失效，试图更新...");
+                    Match match = Regex.Match(resp.Headers["Location"], "\\?service=(.{1,})");
+                    string serviceurl = HttpUtility.UrlDecode(match.Groups[1].Value);
+                    client.ResetCookieContainer();
+                    string CAS = client.Login.MOD_AUTH_CAS(serviceurl, true);
+                    if (CAS.Length < 1) throw new Exception("无法获取签到信息：认证失败");
+                    Console.WriteLine("\t\t已更新，重新发送请求...");
+                    goto retry;
+                }
+                else
+                {
+                    throw;//不应被处理的错误
+                }
+            }
             if (result == null)
             {
                 throw new Exception("无法获取签到信息：认证失败");
@@ -144,9 +177,46 @@ namespace NJITSignHelper.SignMsgLib
             }
 
             jb.Add("extraFieldItems", fieldItems);
-            var result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign",
-                jb, getSignature(location));
-            return result;
+            string CAS = client.Login.MOD_AUTH_CAS("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign");
+        retry:
+            try
+            {
+                var result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/submitSign",
+                    jb, CpdCrypt:getSignature(location), CAS:CAS);
+                return result;
+            }
+            catch (System.Net.WebException ex)
+            {
+                var resp = (System.Net.HttpWebResponse)ex.Response;
+                if (
+                    (resp.StatusCode == System.Net.HttpStatusCode.Found ||
+                    resp.StatusCode == System.Net.HttpStatusCode.MovedPermanently
+                    )//是跳转
+                    &&
+                    (resp.Headers["Location"] != null &&
+                    Regex.IsMatch(resp.Headers["Location"], ".*authserver/login\\?service=.*")
+                    )//跳转地址正确
+                    )
+                {
+                    Console.WriteLine("\t\tCAS失效，试图更新...");
+                    Match match = Regex.Match(resp.Headers["Location"], "\\?service=(.{1,})");
+                    string serviceurl = HttpUtility.UrlDecode(match.Groups[1].Value);
+                    client.ResetCookieContainer();
+                    CAS = client.Login.MOD_AUTH_CAS(serviceurl, true);
+                    if (CAS.Length < 1) throw new Exception("无法获取签到信息：认证失败");
+                    Console.WriteLine("\t\t已更新，重新发送请求...");
+                    goto retry;
+                }
+                else
+                {
+                    throw;//不应被处理的错误
+                }
+            }
+        }
+
+        public bool Equals(SignObject other)
+        {
+            return signWid.Equals(other.signWid);
         }
     }
 }

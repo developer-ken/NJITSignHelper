@@ -110,7 +110,7 @@ namespace MiraiSignBot.Procedure
                 {
                     string[] data = ReadLine().Replace("，", ",").Split(',');
                     Location wgs84 = new Location(double.Parse(data[0]), double.Parse(data[1]));
-                    wgs84.locName = Location.getLocName(wgs84);
+                    wgs84.locName = Location.getLocName(wgs84.ToBD09());
                     session.SendFriendMessageAsync(qq,
                         new PlainMessage("ℹ我发现你在" + wgs84.locName)).Wait();
                     return wgs84;

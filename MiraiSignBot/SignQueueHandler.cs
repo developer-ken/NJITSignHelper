@@ -82,10 +82,12 @@ namespace MiraiSignBot
         {
             if (queue == null) queue = new Dictionary<long, User>();
             lock (queue)
+            {
                 foreach (User u in queue.Values)
                 {
                     CheckUser(u);
                 }
+            }
         }
 
         public static void ReCheckUser(long qq)
@@ -120,6 +122,7 @@ namespace MiraiSignBot
                 {
                     if (item.Handled)
                     {
+                        Console.WriteLine("\t<" + item.signWid + ">已被签到，不处理");
                         handles++;
                         continue;
                     }
@@ -140,18 +143,10 @@ namespace MiraiSignBot
                         {
                             if (Regex.IsMatch(err.Message, ".*认证失败.*"))
                             {
-                                Console.Write("\tCAS失效，试图更新...");
-                                if (han.ReLogin())
-                                {
-                                    Console.WriteLine("OK.");
-                                    item.FetchMore();
-                                }
-                                else
-                                {
-                                    Console.WriteLine("FAIL.\n\tCAS认证失败，无法获取签到信息。");
-                                    throw new Exception("CAS已失效且无法更新");
-                                }
+                                Console.WriteLine("FAIL.\n\tCAS认证失败，无法获取签到信息。");
+                                throw new Exception("CAS已失效且无法更新");
                             }
+                            else throw;
                         }
                         List<FormSelection> selections = new List<FormSelection>();
                         foreach (var quest in item.form)
@@ -184,7 +179,7 @@ namespace MiraiSignBot
                         {
                             Console.WriteLine("\t<EXCEPTION>发送消息失败：" + err.Message);
                         }
-                        var res = item.Sign(selections.ToArray(), location.ToBD09());
+                        var res = item.Sign(selections.ToArray(), location);
                         if (res.Value<long>("code") == 0)
                         {
                             Console.WriteLine("\t->已签到");

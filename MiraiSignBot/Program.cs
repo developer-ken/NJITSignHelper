@@ -13,7 +13,7 @@ namespace MiraiSignBot
     {
         public static MiraiHttpSession session;
         private static Dictionary<long, Procedure.Procedure> procedures = new Dictionary<long, Procedure.Procedure>();
-        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.1.234", 1234, "Ken1250542735");
+        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.88.8", 1234, "P1250542735");
         private static long qq = 2997309496;
         static void Main(string[] args)
         {
@@ -39,11 +39,13 @@ namespace MiraiSignBot
                     Console.WriteLine("[Queue]加载失败：" + err.Message + "\n" + err.StackTrace);
                 }
             }
-
             while (true)
             {
+                DateTime start = DateTime.Now;
+                Console.WriteLine("[Timer] 计时器开始:" + start);
                 SignQueueHandler.__ProceedQueue();
                 SignQueueHandler.Save();
+                Console.WriteLine("[Timer] 计时器结束:" + DateTime.Now+", 用时"+(DateTime.Now - start).Seconds+"秒");
                 Thread.Sleep(10 * 60 * 1000);
             }
         }

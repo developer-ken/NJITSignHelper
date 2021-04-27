@@ -71,6 +71,57 @@ namespace NJITSignHelper.SignMsgLib
         }
 
         /// <summary>
+        /// 使用指定CAS完成请求
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="payload"></param>
+        /// <param name="CAS"></param>
+        /// <param name="CpdCrypt"></param>
+        /// <returns></returns>
+        public JObject HTTP_POST(string url, JObject payload, string CAS, string CpdCrypt = "")
+        {
+            string result = "";
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            req.Method = "POST";
+            req.ContentType = "application/json";
+
+            req.Headers.Add("accessToken", ACCESS_TOKEN);
+            req.Headers.Add("appId", APPID);
+            req.Headers.Add("Cpdaily-Extension", CpdCrypt);
+            req.Headers.Add("extension", "1");
+            req.Headers.Add("CpdailyStandAlone", "0");
+            req.Headers.Add("tenantId", "njit");
+            req.CookieContainer = new CookieContainer();
+            foreach (Cookie c in InnerCookieContainer.GetCookies(new Uri(url)))
+            {
+                if (c.Name != "MOD_AUTH_CAS")
+                    req.CookieContainer.Add(c);
+            }
+            req.CookieContainer.Add(new Uri(url), new Cookie("MOD_AUTH_CAS", CAS));
+            req.UserAgent = UA;
+
+            byte[] data = Encoding.UTF8.GetBytes(payload.ToString());
+            req.ContentLength = data.Length;
+            using (Stream reqStream = req.GetRequestStream())
+            {
+                reqStream.Write(data, 0, data.Length);
+                reqStream.Close();
+            }
+
+            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+            if (resp.ContentType.IndexOf("json") >= 0)
+            {
+                Stream stream = resp.GetResponseStream();
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    result = reader.ReadToEnd();
+                }
+                return (JObject)JsonConvert.DeserializeObject(result);
+            }
+            else return null;
+        }
+
+        /// <summary>
         /// 创建客户端
         /// </summary>
         /// <param name="cpe">Cpdaily-Extension的值</param>
@@ -80,7 +131,13 @@ namespace NJITSignHelper.SignMsgLib
             Login = login;
             Info = inf;
             InnerCookieContainer = new CookieContainer();
-            InnerCookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS, "/", ".njit.campusphere.net"));
+            InnerCookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS(), "/", ".njit.campusphere.net"));
+        }
+
+        public void ResetCookieContainer()
+        {
+            InnerCookieContainer = new CookieContainer();
+            InnerCookieContainer.Add(new Cookie("MOD_AUTH_CAS", Login.MOD_AUTH_CAS(), "/", ".njit.campusphere.net"));
         }
 
         public int lastUpdate = 0;
@@ -123,7 +180,7 @@ namespace NJITSignHelper.SignMsgLib
                 page.Add("size", step);
                 page.Add("total", "");
                 payload.Add("page", page);
-
+                start += step;
                 var result = HTTP_POST(
                     "http://messageapi.campusphere.net/message_pocket_web/V2/mp/restful/mobile/message/extend/get",
                     payload);
@@ -142,7 +199,10 @@ namespace NJITSignHelper.SignMsgLib
                     {
                         reslist.Add(new SignObject(jb, this));
                     }
-                    catch { }
+                    catch (Exception err)
+                    {
+
+                    }
                 }
                 if (result["page"].Value<int>("size") < step) break;
             } while (true);
