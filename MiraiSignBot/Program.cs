@@ -7,6 +7,7 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using MiraiSignBot.Struct;
+using Newtonsoft.Json.Linq;
 
 namespace MiraiSignBot
 {
@@ -14,12 +15,23 @@ namespace MiraiSignBot
     {
         public static MiraiHttpSession session;
         private static Dictionary<long, Procedure.Procedure> procedures = new Dictionary<long, Procedure.Procedure>();
-        private static MiraiHttpSessionOptions options = new MiraiHttpSessionOptions("192.168.88.8", 1234, "P1250542735");
+        private static MiraiHttpSessionOptions options;
         private static long qq = 2997309496;
         static void Main(string[] args)
         {
-            Console.WriteLine("[QQ]初始化...");
+            Console.WriteLine("[QQ]配置初始化...");
             session = new MiraiHttpSession();
+            if (!File.Exists("mirai.conf"))
+            {
+                JObject jb = new JObject();
+                jb.Add("host", "127.0.0.1");
+                jb.Add("port", 1234);
+                jb.Add("auth", "passw0rd");
+                File.WriteAllText("mirai.conf", jb.ToString());
+            }
+            string config = File.ReadAllText("mirai.conf");
+            JObject conf = JObject.Parse(config);
+            options = new MiraiHttpSessionOptions(conf.Value<string>("host"), conf.Value<int>("port"), conf.Value<string>("auth"));
             Console.WriteLine("[QQ]等待Mirai...");
             session.ConnectAsync(options, qq).Wait();
             session.DisconnectedEvt += Session_DisconnectedEvt;
@@ -42,12 +54,20 @@ namespace MiraiSignBot
             }
             while (true)
             {
-                DateTime start = DateTime.Now;
-                Console.WriteLine("[Timer] 计时器开始:" + start);
-                SignQueueHandler.__ProceedQueue();
-                SignQueueHandler.Save();
-                Console.WriteLine("[Timer] 计时器结束:" + DateTime.Now+", 用时"+(DateTime.Now - start).Seconds+"秒");
-                Thread.Sleep(10 * 60 * 1000);
+                try
+                {
+                    DateTime start = DateTime.Now;
+                    Console.WriteLine("[Timer] 计时器开始:" + start);
+                    SignQueueHandler.__ProceedQueue();
+                    SignQueueHandler.Save();
+                    Console.WriteLine("[Timer] 计时器结束:" + DateTime.Now + ", 用时" + (DateTime.Now - start).Seconds + "秒");
+                    Thread.Sleep(10 * 60 * 1000);
+                }
+                catch (Exception err)
+                {
+                    Console.WriteLine("[EXCEPTION] 消息循环内出现意外错误：" + err.Message);
+                    Console.WriteLine("[EXCEPTION] StackTrace:\n" + err.StackTrace);
+                }
             }
         }
 
