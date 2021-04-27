@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+using MiraiSignBot.Struct;
 
 namespace MiraiSignBot
 {
@@ -95,6 +96,17 @@ namespace MiraiSignBot
             {
                 switch (msg)
                 {
+                    case "RESET":
+                        {
+                            lock (SignQueueHandler.queue)
+                            {
+                                foreach (User u in SignQueueHandler.queue.Values)
+                                {
+                                    u.cli.lastUpdate = 0;
+                                }
+                            }
+                        }
+                        break;
                     case "自动签到":
                         Procedure.SetupAccount proc = new Procedure.SetupAccount(e.Sender.Id, session);
                         procedures.Add(e.Sender.Id, proc);
@@ -114,7 +126,7 @@ namespace MiraiSignBot
                     case "谁没签到":
                         try
                         {
-                            Console.WriteLine("[" + e.Sender.Id + "] 正在执行签到广谱查询...");
+                            Console.WriteLine("[" + e.Sender.Id + "] 正在执行签到查询...");
                             await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
                                 "稍等，我查一下..."
                                 ));
@@ -150,7 +162,7 @@ namespace MiraiSignBot
                         }
                         catch (Exception err)
                         {
-                            session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
+                            await session.SendFriendMessageAsync(e.Sender.Id, new PlainMessage(
                                 "额...我这边好像出问题了。如果你需要技术帮助，可以提供下面的信息:\n" +
                                 err.Message + "\n" +
                                 err.StackTrace

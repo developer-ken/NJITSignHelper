@@ -56,10 +56,11 @@ namespace NJITSignHelper.SignMsgLib
             jb.Add("signInstanceWid", signInstanceWid.ToString());
             jb.Add("signWid", signWid.ToString());
             JObject result = null;
+            string CAS = client.Login.MOD_AUTH_CAS("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance");
         retry:
             try
             {
-                result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance", jb, CAS: client.Login.MOD_AUTH_CAS("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance"));
+                result = client.HTTP_POST("https://njit.campusphere.net/wec-counselor-sign-apps/stu/sign/detailSignInstance", jb, CAS: CAS);
             }
             catch (System.Net.WebException ex)
             {
@@ -78,7 +79,7 @@ namespace NJITSignHelper.SignMsgLib
                     Match match = Regex.Match(resp.Headers["Location"], "\\?service=(.{1,})");
                     string serviceurl = HttpUtility.UrlDecode(match.Groups[1].Value);
                     client.ResetCookieContainer();
-                    string CAS = client.Login.MOD_AUTH_CAS(serviceurl, true);
+                    CAS = client.Login.MOD_AUTH_CAS(serviceurl, true);
                     if (CAS.Length < 1) throw new Exception("无法获取签到信息：认证失败");
                     Console.WriteLine("\t\t已更新，重新发送请求...");
                     goto retry;

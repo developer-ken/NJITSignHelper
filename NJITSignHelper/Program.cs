@@ -88,6 +88,11 @@ namespace NJITSignHelper
                         Console.WriteLine("\t<" + item.signWid + ">已过期，不处理：" + item.DeadLine.ToString());
                         continue;
                     }
+                    if (item.Handled)
+                    {
+                        Console.WriteLine("\t<" + item.signWid + ">已被签过");
+                        continue;
+                    }
                     Console.WriteLine("\t<" + item.signWid + ">开始处理");
                     try
                     {
