@@ -68,7 +68,7 @@ namespace MiraiSignBot
         public static void Save()
         {
             lock (queue)
-                File.WriteAllBytes("./database.bin", ObjectSerilizer.SerializeToBinary(queue));
+                File.WriteAllBytes("./database.bin", ObjectSerilizer.SerializeToJson(queue));
         }
 
         public static void Load()
@@ -220,7 +220,7 @@ namespace MiraiSignBot
 
         public static int Now()
         {
-            return (int)(DateTime.Now - TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1))).TotalSeconds;
+            return (int)(DateTime.Now - TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1),TimeZoneInfo.Local)).TotalSeconds;
         }
     }
 }

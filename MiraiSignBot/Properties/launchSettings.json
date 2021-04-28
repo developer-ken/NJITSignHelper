@@ -2,7 +2,8 @@
   "profiles": {
     "MiraiSignBot": {
       "commandName": "Project",
-      "remoteDebugEnabled": false
+      "remoteDebugEnabled": false,
+      "remoteDebugMachine": "127.0.0.1"
     }
   }
 }
