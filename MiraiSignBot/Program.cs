@@ -65,12 +65,22 @@ namespace MiraiSignBot
                 }
                 catch (Exception err)
                 {
-                    Console.WriteLine("[EXCEPTION] 消息循环内出现意外错误：" + err.Message);
-                    Console.WriteLine("[EXCEPTION] StackTrace:\n" + err.StackTrace);
+                    Console.WriteLine("[EXCEPTION] 消息循环内出现意外错误");
+                    DumpError(err);
                 }
             }
         }
 
+        private static void DumpError(Exception err)
+        {
+            Console.WriteLine("[EXCEPTION] " + err.Message);
+            Console.WriteLine("[EXCEPTION] Stack:" + err.StackTrace);
+            if (err.InnerException != null)
+            {
+                Console.WriteLine("[EXCEPTION] ->Inner Exception");
+                DumpError(err.InnerException);
+            }
+        }
         private static async System.Threading.Tasks.Task<bool> Session_DisconnectedEvt(MiraiHttpSession sender, Exception e)
         {
             while (true)
